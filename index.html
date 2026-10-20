@@ -1,41 +1,340 @@
 
-<div class="section">Circle geometry</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Segment Calculator</title>
 
-<label for="c1">C — Chord length (mm)</label>
-<input id="c1" type="number" step="any" placeholder="Enter chord">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
 
-<label for="h1">H — Segment height (mm)</label>
-<input id="h1" type="number" step="any" placeholder="Enter height">
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #111;
+    color: #f5f5f5;
+    padding: max(24px, env(safe-area-inset-top))
+             18px
+             max(24px, env(safe-area-inset-bottom));
+  }
 
-<label for="r1">R — Radius (mm)</label>
-<input id="r1" type="number" step="any" placeholder="Enter radius">
+  main { max-width: 520px; margin: 0 auto; }
 
-<div id="status" class="status">
-  Enter any two parameters.
-</div>
-<div id="error" class="error"></div>
+  h1 {
+    font-size: 30px;
+    letter-spacing: -0.8px;
+    margin: 12px 0 6px;
+  }
+
+  .sub {
+    color: #999;
+    margin-bottom: 28px;
+    font-size: 14px;
+  }
+
+  .section {
+    margin-top: 28px;
+    margin-bottom: 8px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .intro {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #999;
+    margin-bottom: 18px;
+  }
+
+  .field {
+    margin-top: 20px;
+  }
+
+  .field-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  label {
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .anchor-btn {
+    flex-shrink: 0;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background: #202020;
+    color: #aaa;
+    padding: 7px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .4px;
+    cursor: pointer;
+  }
+
+  .anchor-btn.active {
+    color: #a9d8ff;
+    background: #182735;
+    border-color: #426d91;
+  }
+
+  input {
+    display: block;
+    width: 100%;
+    font-size: 22px;
+    padding: 15px 14px;
+    border: 1px solid #444;
+    border-radius: 12px;
+    background: #1d1d1d;
+    color: white;
+    outline: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  input:focus { border-color: #888; }
+
+  input.computed {
+    border-color: #426d5a;
+    background: #18211c;
+  }
+
+  .field-note {
+    font-size: 12px;
+    color: #777;
+    margin-top: 6px;
+  }
+
+  .status {
+    margin-top: 22px;
+    padding: 13px 14px;
+    border-radius: 10px;
+    background: #1b1b1b;
+    color: #aaa;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .status.good { color: #a9d8b9; }
+  .status.warn { color: #ffb5a8; }
+
+  .result {
+    margin-top: 24px;
+    padding: 18px;
+    border-radius: 14px;
+    background: #1d1d1d;
+    border: 1px solid #333;
+  }
+
+  .result-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #999;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    margin: 15px 0;
+  }
+
+  .row span:first-child {
+    color: #aaa;
+    font-size: 14px;
+  }
+
+  .value {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .divider {
+    height: 1px;
+    background: #333;
+    margin: 16px 0;
+  }
+
+  button.reset {
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    border: 1px solid #444;
+    border-radius: 10px;
+    background: #292929;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  button:active { transform: scale(.99); }
+
+  .formula {
+    color: #777;
+    font-size: 12px;
+    line-height: 1.8;
+    margin-top: 26px;
+    padding-bottom: 12px;
+  }
+</style>
+</head>
+
+<body>
+<main>
+  <h1>Segment Calculator</h1>
+  <div class="sub">Chord &amp; segment geometry</div>
+
+  <div class="section">Circle geometry</div>
+  <div class="intro">
+    Fix any two parameters as anchors.
+    The third parameter is calculated automatically.
+    Change an anchor to explore a different geometry.
+  </div>
+
+  <div class="field">
+    <div class="field-head">
+      <label for="c">C — Chord length (mm)</label>
+      <button type="button" class="anchor-btn" data-anchor="C">
+        ◇ ANCHOR
+      </button>
+    </div>
+    <input id="c" type="number" inputmode="decimal"
+           step="any" placeholder="e.g. 505">
+    <div class="field-note" id="note-C">Straight-line distance between endpoints</div>
+  </div>
+
+  <div class="field">
+    <div class="field-head">
+      <label for="h">H — Segment height (mm)</label>
+      <button type="button" class="anchor-btn" data-anchor="H">
+        ◇ ANCHOR
+      </button>
+    </div>
+    <input id="h" type="number" inputmode="decimal"
+           step="any" placeholder="e.g. 95.3">
+    <div class="field-note" id="note-H">Distance from chord to arc</div>
+  </div>
+
+  <div class="field">
+    <div class="field-head">
+      <label for="r">R — Radius (mm)</label>
+      <button type="button" class="anchor-btn" data-anchor="R">
+        ◇ ANCHOR
+      </button>
+    </div>
+    <input id="r" type="number" inputmode="decimal"
+           step="any" placeholder="e.g. 383">
+    <div class="field-note" id="note-R">Radius of the circle</div>
+  </div>
+
+  <div id="status" class="status">
+    Enter any two parameters, then fix them as anchors.
+  </div>
+
+  <div id="result" class="result" hidden>
+    <div class="result-title">CURRENT GEOMETRY</div>
+
+    <div class="row">
+      <span>Chord C</span>
+      <span class="value" id="outC">—</span>
+    </div>
+    <div class="row">
+      <span>Segment height H</span>
+      <span class="value" id="outH">—</span>
+    </div>
+    <div class="row">
+      <span>Radius R</span>
+      <span class="value" id="outR">—</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="row">
+      <span>Arc length</span>
+      <span class="value" id="outArc">—</span>
+    </div>
+    <div class="row">
+      <span>Central angle</span>
+      <span class="value" id="outAngle">—</span>
+    </div>
+  </div>
+
+  <button type="button" class="reset" id="reset">
+    RESET
+  </button>
+
+  <div class="formula">
+    R = C² / (8H) + H / 2<br>
+    H = R − √(R² − C²/4)<br>
+    C = 2√(2RH − H²)<br>
+    Arc length = R × central angle
+  </div>
+</main>
 
 <script>
 const fields = {
-  C: document.getElementById('c1'),
-  H: document.getElementById('h1'),
-  R: document.getElementById('r1')
+  C: document.getElementById('c'),
+  H: document.getElementById('h'),
+  R: document.getElementById('r')
 };
 
 const statusEl = document.getElementById('status');
-const errorEl = document.getElementById('error');
+const resultEl = document.getElementById('result');
+const anchorButtons = [...document.querySelectorAll('[data-anchor]')];
 
+// The most recently selected anchor is last in this array.
 let anchors = [];
 
 function read(key) {
-  const s = fields[key].value.trim();
-  if (s === '') return null;
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
+  const raw = fields[key].value.trim();
+  if (raw === '') return null;
+
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
 }
 
 function write(key, value) {
-  fields[key].value = Number(value.toFixed(4)).toString();
+  fields[key].value = Number(value.toFixed(6)).toString();
+}
+
+function fmt(value) {
+  return value.toLocaleString('en-US', {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2
+  }) + ' mm';
+}
+
+function setStatus(message, type = '') {
+  statusEl.textContent = message;
+  statusEl.className = 'status' + (type ? ' ' + type : '');
+}
+
+function updateAnchorUI() {
+  for (const key of ['C', 'H', 'R']) {
+    const active = anchors.includes(key);
+    const button = document.querySelector(
+      '[data-anchor="' + key + '"]'
+    );
+
+    button.classList.toggle('active', active);
+    button.textContent = active ? '● ANCHOR' : '◇ ANCHOR';
+
+    fields[key].classList.toggle('computed', !active);
+  }
 }
 
 function solve(a, b) {
@@ -52,10 +351,8 @@ function solve(a, b) {
     const C = read('C');
     const H = read('H');
 
-    return {
-      key: 'R',
-      value: C * C / (8 * H) + H / 2
-    };
+    const R = C * C / (8 * H) + H / 2;
+    return { key: 'R', value: R };
   }
 
   // C + R -> H
@@ -65,62 +362,132 @@ function solve(a, b) {
     const R = read('R');
 
     if (C > 2 * R) {
-      return { error: 'Chord cannot exceed the diameter (2R).' };
+      return {
+        error: 'Chord C cannot exceed the diameter (2R).'
+      };
     }
 
-    return {
-      key: 'H',
-      value: R - Math.sqrt(Math.max(0, R * R - C * C / 4))
-    };
+    const H = R - Math.sqrt(
+      Math.max(0, R * R - (C / 2) ** 2)
+    );
+
+    return { key: 'H', value: H };
   }
 
-  // H + R -> C
+  // H + R -> C; use the minor segment (H <= R).
   const H = read('H');
   const R = read('R');
 
   if (H > R) {
     return {
-      error: 'For a minor segment, H must not exceed R.'
+      error: 'For the minor arc, H cannot exceed R.'
     };
   }
 
-  return {
-    key: 'C',
-    value: 2 * Math.sqrt(Math.max(0, 2 * R * H - H * H))
-  };
+  const C = 2 * Math.sqrt(
+    Math.max(0, 2 * R * H - H * H)
+  );
+
+  return { key: 'C', value: C };
 }
 
-function update(changed) {
-  errorEl.textContent = '';
+function calculate() {
+  updateAnchorUI();
+  resultEl.hidden = true;
 
-  // The edited field becomes an anchor.
-  anchors = anchors.filter(k => k !== changed);
-  anchors.push(changed);
-
-  // Keep the two most recently edited fields as anchors.
-  if (anchors.length > 2) anchors.shift();
-
-  if (anchors.length < 2) {
-    statusEl.textContent = 'Enter one more parameter to calculate.';
+  if (anchors.length !== 2) {
+    setStatus(
+      anchors.length === 0
+        ? 'Enter values, then select two anchors.'
+        : 'Select one more anchor to calculate.',
+      ''
+    );
     return;
   }
 
-  const result = solve(anchors[0], anchors[1]);
+  const [a, b] = anchors;
+  const solved = solve(a, b);
 
-  if (result.error) {
-    errorEl.textContent = result.error;
-    statusEl.textContent = 'Check the anchor values.';
+  if (solved.error) {
+    setStatus(solved.error, 'warn');
     return;
   }
 
-  write(result.key, result.value);
+  write(solved.key, solved.value);
 
-  statusEl.textContent =
+  const C = read('C');
+  const H = read('H');
+  const R = read('R');
+
+  if (!(C >= 0) || !(H >= 0) || !(R > 0)) {
+    setStatus('Unable to calculate this geometry.', 'warn');
+    return;
+  }
+
+  // Central angle of the minor arc.
+  const angle = 2 * Math.asin(
+    Math.min(1, C / (2 * R))
+  );
+  const arc = R * angle;
+
+  document.getElementById('outC').textContent = fmt(C);
+  document.getElementById('outH').textContent = fmt(H);
+  document.getElementById('outR').textContent = fmt(R);
+  document.getElementById('outArc').textContent = fmt(arc);
+  document.getElementById('outAngle').textContent =
+    (angle * 180 / Math.PI).toFixed(2) + '°';
+
+  resultEl.hidden = false;
+
+  setStatus(
     'Anchors: ' + anchors.join(' + ') +
-    ' | Calculated: ' + result.key;
+    ' · Calculated automatically: ' + solved.key,
+    'good'
+  );
 }
 
-Object.keys(fields).forEach(key => {
-  fields[key].addEventListener('input', () => update(key));
+// Selecting an anchor explicitly.
+anchorButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const key = button.dataset.anchor;
+
+    if (anchors.includes(key)) {
+      anchors = anchors.filter(k => k !== key);
+    } else {
+      // Keep at most two anchors.
+      if (anchors.length === 2) anchors.shift();
+      anchors.push(key);
+    }
+
+    calculate();
+  });
+});
+
+// Editing a field makes it an anchor.
+// If two anchors already exist, replace the oldest anchor.
+Object.entries(fields).forEach(([key, input]) => {
+  input.addEventListener('input', () => {
+    anchors = anchors.filter(k => k !== key);
+
+    if (anchors.length === 2) anchors.shift();
+    anchors.push(key);
+
+    calculate();
+  });
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  for (const key of ['C', 'H', 'R']) {
+    fields[key].value = '';
+    fields[key].classList.remove('computed');
+  }
+
+  anchors = [];
+  updateAnchorUI();
+  resultEl.hidden = true;
+
+  setStatus('Enter any two parameters, then fix them as anchors.');
 });
 </script>
+</body>
+</html>
